@@ -7,10 +7,13 @@ let cartForm = document.getElementById("cart-form")
 let cartAmt = document.getElementById("cart-amount")
 let numSpan = document.getElementById("number-in-cart")
 let dishSection = document.getElementById("dish")
+let orderTotalSpan = document.getElementById("order-total")
 
 let menuItemsArr = [] //"state"
 
 const BASE_URL = "http://localhost:3000/"
+
+//////////////////////// FUNCTIONS ///////////////////////////////
 
 function renderMenuItem(menuItem) {
   let itemSpan = document.createElement("span")
@@ -22,8 +25,7 @@ function renderMenuItem(menuItem) {
 function displayItem(menuItem) {
   dishSection.dataset.id = menuItem.id
 
-  let currentId = getCurrentId()
-  let currentItem = menuItemsArr.find(item => item.id === currentId)
+  let currentItem = getCurrentDisplayItem()
 
   menuItemImg.src = currentItem.image
   menuItemName.textContent = currentItem.name
@@ -46,8 +48,15 @@ function addToCart(e) {
 
   numSpan.textContent = total
   e.target.reset()
+}
 
-  //calculate and put total price somewhere on page
+function calculateTotal() {
+  let orderTotal = 0
+
+  menuItemsArr.forEach(item => {
+    orderTotal += item.number_in_bag * item.price
+  })
+  orderTotalSpan.textContent = `$${orderTotal.toFixed(2)}`
 }
 
 function handleUpdate(total) {
@@ -63,7 +72,10 @@ function handleUpdate(total) {
     }),
   })
     .then(r => r.json())
-    .then(updatedItem => updateMenuItemArr(updatedItem))
+    .then(updatedItem => {
+      updateMenuItemArr(updatedItem)
+      calculateTotal()
+    })
 }
 
 function updateMenuItemArr(updatedItem) {
@@ -71,17 +83,18 @@ function updateMenuItemArr(updatedItem) {
   menuItemsArr.splice(idx, 1, updatedItem)
 }
 
-// HELPER FUNCTIONS
+/////////////////////////// HELPER FUNCTIONS ////////////////////
+
 function getCurrentDisplayItem() {
   let currentId = getCurrentId()
   return menuItemsArr.find(item => item.id === currentId)
 }
 
 function getCurrentId() {
-    return parseInt(dishSection.dataset.id)
+  return parseInt(dishSection.dataset.id)
 }
 
-// INITIALIZE APP
+///////////////////////////// INITIALIZE APP//////////////////////
 function app() {
   fetch(BASE_URL + "menu")
     .then(r => r.json())
@@ -92,6 +105,7 @@ function app() {
       })
       dishSection.setAttribute("data-id", menuItemsArr[0].id)
       displayItem(menuItemsArr[0])
+      calculateTotal()
     })
   cartForm.addEventListener("submit", addToCart)
 }
